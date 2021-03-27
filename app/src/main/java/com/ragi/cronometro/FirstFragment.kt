@@ -1,27 +1,23 @@
 package com.ragi.cronometro
 
+import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.CountDownTimer
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Adapter
-import android.widget.AdapterView
-import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.navigation.fragment.findNavController
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
 import java.text.DecimalFormat
-import java.time.DateTimeException
-
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
+
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -32,6 +28,8 @@ class FirstFragment : Fragment() {
     var tv_horario: TextView?=null;
     val time: Long = 1000000000L
     var timer : Timer = Timer(time)
+    var runing = 0;
+    var pb_seg: android.widget.ProgressBar? = null;
 
     inner class Timer(miliis:Long) : CountDownTimer(miliis,1){
         var millisUntilFinished:Long = 0
@@ -48,8 +46,11 @@ class FirstFragment : Fragment() {
             val mls = passTime-sec*1000-min*60000-hour*3600000;
             tv_horario?.text = f.format(hour) + ":" + f.format(min) + ":" + f.format(sec) + ":" + fm.format(mls)
             val tic: Float = 100f/60f * sec
-            //progressBar.progress = tic.toInt()
+            pb_seg!!.progress = tic.toInt()
+
         }
+
+
     }
 
     override fun onCreateView(
@@ -66,7 +67,6 @@ class FirstFragment : Fragment() {
 
 
     }
-
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -93,6 +93,18 @@ class FirstFragment : Fragment() {
             horario("horario3","12:00")
             );
 */
+        //android.animation.ValueAnimator.sDurationScale == 0.0f
+        pb_seg = view.findViewById<ProgressBar?>(R.id.pb_seg);
+        pb_seg!!.max = 100;
+        pb_seg!!.progress = 0;
+
+        val progressDrawable: Drawable = pb_seg!!.getProgressDrawable().mutate()
+        progressDrawable.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN)
+        pb_seg!!.setProgressDrawable(progressDrawable)
+
+        view.setVisibility(View.VISIBLE);
+        pb_seg!!.setVisibility(View.INVISIBLE);
+
 
 
         var rctempos: RecyclerView = view.findViewById<RecyclerView>(R.id.rv_tempos);
@@ -104,7 +116,10 @@ class FirstFragment : Fragment() {
             override fun onLongClick(v: View?): Boolean {
 
                 (rctempos.adapter as cAdpTempos).clearAll();
-                start();
+                if (runing==1)
+                    reset()
+                else
+                    start();
 
                 return true  }
         })
@@ -158,8 +173,20 @@ class FirstFragment : Fragment() {
     fun start() {
         _utltimoHorario = Calendar.getInstance().time
         timer.start()
+        runing=1;
     }
 
+    fun pause() {
+        timer.cancel();
+        runing = 0;
+    }
 
+    fun reset() {
+        tv_horario?.text = "00:00:00:000"
+        _utltimoHorario =null;
+        timer.cancel()
+        timer = Timer(time)
+        runing=0;
+    }
 
 }
