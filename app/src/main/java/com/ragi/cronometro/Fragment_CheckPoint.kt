@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.DecimalFormat
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
-class FirstFragment : Fragment() {
+class Fragment_CheckPoint : Fragment() {
 
     var  _utltimoHorario : Date? = null;
     var tv_horario: TextView?=null;
@@ -30,6 +31,7 @@ class FirstFragment : Fragment() {
     var timer : Timer = Timer(time)
     var runing = 0;
     var pb_seg: android.widget.ProgressBar? = null;
+    var _chkpnt_cnt : Int = -1;
 
     inner class Timer(miliis:Long) : CountDownTimer(miliis,1){
         var millisUntilFinished:Long = 0
@@ -63,7 +65,7 @@ class FirstFragment : Fragment() {
 
 
 
-        return inflater.inflate(R.layout.fragment_first, container, false)
+        return inflater.inflate(R.layout.fragment_checkpoint, container, false)
 
 
     }
@@ -72,27 +74,8 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-
         tv_horario = view.findViewById<TextView>(R.id.tv_horario);
 
-/*
-        var i=0;
-        var lshorario : List<horario>;
-        lshorario = arrayListOf();
-        while (i<1)
-        {
-            lshorario.add(horario("Horario"+i.toString(),"00:"+ i.toString().padStart(2,'0')));
-            i++;
-        }
-*/
-/*
-        var lshorario = arrayListOf(
-            horario("horario1","10:00"),
-            horario("horario2","11:00"),
-            horario("horario3","12:00")
-            );
-*/
         //android.animation.ValueAnimator.sDurationScale == 0.0f
         pb_seg = view.findViewById<ProgressBar?>(R.id.pb_seg);
         pb_seg!!.max = 100;
@@ -110,6 +93,8 @@ class FirstFragment : Fragment() {
         var rctempos: RecyclerView = view.findViewById<RecyclerView>(R.id.rv_tempos);
         rctempos.layoutManager = LinearLayoutManager(this.context);
         rctempos.adapter = cAdpTempos(arrayListOf(),this.context);
+        rctempos.addItemDecoration(DividerItemDecoration(rctempos.getContext(), DividerItemDecoration.VERTICAL))
+
 
 
         global.floatbutton?.setOnLongClickListener(object: View.OnLongClickListener {
@@ -127,14 +112,12 @@ class FirstFragment : Fragment() {
 
         global.floatbutton?.setOnClickListener { view ->
 
-            //var rctempos: RecyclerView = view.findViewById<RecyclerView>(R.id.rv_tempos);
             var adpt:cAdpTempos =  rctempos.adapter as cAdpTempos;
 
             val date = Calendar.getInstance().time;
 
             if (_utltimoHorario == null)
                 start();
-
 
             var dif = date.time - _utltimoHorario!!.time;
             var difseg = TimeUnit.MILLISECONDS.toSeconds(dif);
@@ -151,22 +134,22 @@ class FirstFragment : Fragment() {
             var dateTimeFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
             var strDataHora : String =  dateTimeFormat.format(date)
 
+
             val f = DecimalFormat("00")
             val fm = DecimalFormat("000")
             //_utltimoHorario = date;
             var str : String = f.format(difDia) +":" + f.format(difHor) + ":" + f.format(difmin) + ":" + f.format(difseg) + ":" + fm.format(dif);
-            adpt.updateList(horario(str, "Checkpoint:" + strDataHora));
+            _chkpnt_cnt++;
+
+            var labelTitulo = "Start"
+            if(_chkpnt_cnt>0)
+                labelTitulo = "Check Point " + _chkpnt_cnt.toString()
+            else {
+                str = strDataHora;
+                strDataHora="";
+            }
+            adpt.updateList(horario(labelTitulo  ,str, strDataHora));
         }
-
-
-
-
-        //var adptempos: RecyclerView.A
-
-
-        //view.findViewById<Button>(R.id.button_first).setOnClickListener {
-        //    findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-        //}
 
     }
 
@@ -174,12 +157,14 @@ class FirstFragment : Fragment() {
         _utltimoHorario = Calendar.getInstance().time
         timer.start()
         runing=1;
+        pb_seg!!.setVisibility(View.VISIBLE);
     }
 
     fun pause() {
         timer.cancel();
         runing = 0;
-    }
+        pb_seg!!.setVisibility(View.INVISIBLE);
+}
 
     fun reset() {
         tv_horario?.text = "00:00:00:000"
@@ -187,6 +172,8 @@ class FirstFragment : Fragment() {
         timer.cancel()
         timer = Timer(time)
         runing=0;
+        _chkpnt_cnt=-1;
+        pb_seg!!.setVisibility(View.INVISIBLE);
     }
 
 }

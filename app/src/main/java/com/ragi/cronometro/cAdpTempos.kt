@@ -22,6 +22,8 @@ class cAdpTempos( val items: MutableList<horario>,
 
         val tvTitulo = view.findViewById<TextView>(R.id.tv_titulo).text;
         val tvHorario = view.findViewById<TextView>(R.id.tv_horario).text;
+        val tvCheckPoint = view.findViewById<TextView>(R.id.tv_chkpnt).text;
+
 
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): cAdpTempos.ViewHolder {
@@ -41,9 +43,10 @@ class cAdpTempos( val items: MutableList<horario>,
         var vhorario = mHorarios?.get(position);
         var txtTitulo = holder.itemView.findViewById<TextView>(R.id.tv_titulo);
         var txtHorario = holder.itemView.findViewById<TextView>(R.id.tv_horario);
-
+        var tvCheckPoint = holder.itemView.findViewById<TextView>(R.id.tv_chkpnt)
         txtTitulo.setText(vhorario?.Titulo);
         txtHorario.setText(vhorario?.Horario);
+        tvCheckPoint.setText(vhorario?.checkpoint)
         //holder?.tempo_item_title?.text = vhorario.Titulo;
 
 
@@ -68,4 +71,4 @@ class cAdpTempos( val items: MutableList<horario>,
     }
 }
 
-public class horario(val Titulo:String, val Horario:String )
+public class horario(val checkpoint:String , val Titulo:String, val Horario:String )
