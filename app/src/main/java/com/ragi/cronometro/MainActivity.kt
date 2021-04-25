@@ -1,19 +1,28 @@
 package com.ragi.cronometro
 
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import androidx.annotation.RequiresApi
 
 class MainActivity : AppCompatActivity() {
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
+
+        getWindow().setStatusBarColor(Color.BLACK);
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
 
+        global.mainactivity = this;
 
         global.floatbutton = findViewById<FloatingActionButton>(R.id.fab);
 

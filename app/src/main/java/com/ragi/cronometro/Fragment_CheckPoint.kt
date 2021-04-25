@@ -1,23 +1,31 @@
 package com.ragi.cronometro
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.preference.PreferenceManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.sql.Time
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.time.milliseconds
 
 
 /**
@@ -28,17 +36,27 @@ class Fragment_CheckPoint : Fragment() {
     var  _utltimoHorario : Date? = null;
     var tv_horario: TextView?=null;
     val time: Long = 1000000000L
-    var timer : Timer = Timer(time)
+    var _timer : Timer = Timer(time)
     var runing = 0;
     var pb_seg: android.widget.ProgressBar? = null;
     var _chkpnt_cnt : Int = -1;
+    var _img_action_man : ImageView? = null;
+    var _lastsec : String = "";
+    var _imgrun : Int = 0;
+    var _millisUntilFinished:Long = 0
+    var _loadfromconfigsaved : Int = 0
+    var _eventoExecutado = "";
+    var _appAbriuAgora =0;
 
     inner class Timer(miliis:Long) : CountDownTimer(miliis,1){
-        var millisUntilFinished:Long = 0
+
         override fun onFinish() {
+            var str : String=""
+
         }
         override fun onTick(millisUntilFinished: Long) {
-            this.millisUntilFinished = millisUntilFinished
+            if (_loadfromconfigsaved==0)
+                _millisUntilFinished = millisUntilFinished;
             val passTime = time - millisUntilFinished
             val f = DecimalFormat("00")
             val fm = DecimalFormat("000")
@@ -50,10 +68,25 @@ class Fragment_CheckPoint : Fragment() {
             val tic: Float = 100f/60f * sec
             pb_seg!!.progress = tic.toInt()
 
+            if (sec.toString() != _lastsec){
+
+                if (_imgrun == R.drawable.ic_time_walk)
+                    _imgrun = R.drawable.ic_time_run
+                else
+                    _imgrun = R.drawable.ic_time_walk
+
+                _img_action_man?.setImageResource(_imgrun)
+
+                _lastsec = sec.toString();
+            }
+
+            _loadfromconfigsaved=0;
         }
 
 
     }
+
+
 
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
@@ -74,8 +107,20 @@ class Fragment_CheckPoint : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        tv_horario = view.findViewById<TextView>(R.id.tv_horario);
+        //val pref = activity?.getSharedPreferences(getString(R.string.dados_checkpoint), Context.MODE_PRIVATE)
 
+        tv_horario = view.findViewById<TextView>(R.id.tv_horario);
+        _img_action_man = view.findViewById<ImageView>(R.id.img_action_man);
+        _img_action_man?.setImageResource(R.drawable.ic_time_pause)
+
+        _appAbriuAgora =1;
+        _loadfromconfigsaved =0;
+
+        var strmillisUntilFinished : String = global.lerpref("checkpoint.tic.end")
+        if (!strmillisUntilFinished.isNullOrEmpty()) {
+            _millisUntilFinished = strmillisUntilFinished.toLong();
+            _loadfromconfigsaved=1;
+        }
         //android.animation.ValueAnimator.sDurationScale == 0.0f
         pb_seg = view.findViewById<ProgressBar?>(R.id.pb_seg);
         pb_seg!!.max = 100;
@@ -92,7 +137,12 @@ class Fragment_CheckPoint : Fragment() {
 
         var rctempos: RecyclerView = view.findViewById<RecyclerView>(R.id.rv_tempos);
         rctempos.layoutManager = LinearLayoutManager(this.context);
-        rctempos.adapter = cAdpTempos(arrayListOf(),this.context);
+
+
+        var adpt:cAdpTempos = cAdpTempos(arrayListOf(),this.context);
+        adpt.carregar();
+        rctempos.adapter = adpt;
+
         rctempos.addItemDecoration(DividerItemDecoration(rctempos.getContext(), DividerItemDecoration.VERTICAL))
 
 
@@ -102,7 +152,7 @@ class Fragment_CheckPoint : Fragment() {
 
                 (rctempos.adapter as cAdpTempos).clearAll();
                 if (runing==1)
-                    reset()
+                    resetpause()
                 else
                     start();
 
@@ -149,31 +199,79 @@ class Fragment_CheckPoint : Fragment() {
                 strDataHora="";
             }
             adpt.updateList(horario(labelTitulo  ,str, strDataHora));
+            //global.salvarpref("checkpoint.start",)
         }
 
     }
 
+    override fun onDestroy() {
+        var strfin =_millisUntilFinished.toString();
+        global.salvarpref("checkpoint.tic.end",strfin)
+        super.onDestroy()
+    }
+
+    override fun onStop() {
+        var strfin =_millisUntilFinished.toString();
+        global.salvarpref("checkpoint.tic.end",strfin)
+        _timer.cancel();
+        super.onStop()
+    }
+
     fun start() {
         _utltimoHorario = Calendar.getInstance().time
-        timer.start()
+        _timer.start()
         runing=1;
         pb_seg!!.setVisibility(View.VISIBLE);
+        global.floatbutton?.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_time_check))
+        _img_action_man?.setImageResource(R.drawable.ic_time_run)
+
+        if (_eventoExecutado=="resetpause" || _appAbriuAgora==1) {
+            iniciarcontagem();
+            global.salvarpref("checkpoint.horarioinicial", Calendar.getInstance().timeInMillis.toString())
+        }
+        _eventoExecutado = "start"
+        _appAbriuAgora =0;
     }
 
     fun pause() {
-        timer.cancel();
+        _timer.cancel();
         runing = 0;
         pb_seg!!.setVisibility(View.INVISIBLE);
-}
-
-    fun reset() {
-        tv_horario?.text = "00:00:00:000"
-        _utltimoHorario =null;
-        timer.cancel()
-        timer = Timer(time)
-        runing=0;
-        _chkpnt_cnt=-1;
-        pb_seg!!.setVisibility(View.INVISIBLE);
+        global.floatbutton?.setImageDrawable(getDrawable(requireContext(), R.drawable.ic_time_play))
+        _eventoExecutado = "pause";
     }
 
-}
+    fun resetpause() {
+        tv_horario?.text = "00:00:00:000"
+        _utltimoHorario = null;
+        _timer.cancel()
+        _timer = Timer(time)
+        runing = 0;
+        _chkpnt_cnt = -1;
+        pb_seg!!.setVisibility(View.INVISIBLE);
+        global.floatbutton?.setImageDrawable(getDrawable(requireContext(),R.drawable.ic_time_play))
+        _img_action_man?.setImageResource(R.drawable.ic_time_pause)
+        _eventoExecutado = "resetpause";
+    }
+
+
+        fun salvardados() {
+
+
+        }
+
+
+        fun iniciarcontagem() {
+
+            var mili: Long = time;
+            var strHorarioSalvo : String = global.lerpref("checkpoint.horarioinicial")
+
+            if (!strHorarioSalvo.isNullOrEmpty()) {
+                var HorarioSalvo : Long = strHorarioSalvo.toLong();
+                mili = Calendar.getInstance().timeInMillis - HorarioSalvo;
+            }
+
+            _timer = Timer(mili)
+        }
+
+    }

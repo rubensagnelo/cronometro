@@ -15,7 +15,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
         android:text="00:00:00:000"
-        android:textColor="#FFF"
+        android:textColor="@android:color/darker_gray"
 
         android:textSize="50sp"
         android:textStyle="bold"
@@ -29,7 +29,7 @@
         style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Horizontal"
         android:layout_width="23dp"
         android:layout_height="25dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="32dp"
         android:layout_marginEnd="16dp"
         android:indeterminate="true"
         android:max="100"
@@ -46,5 +46,14 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_horario"
         tools:ignore="MissingConstraints" />
 
+    <ImageView
+        android:id="@+id/img_action_man"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_time_walk"
+        app:layout_constraintEnd_toEndOf="@+id/tv_horario"
+        app:layout_constraintTop_toTopOf="@+id/tv_horario" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,6 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.reflect.TypeToken
+import kotlin.reflect.typeOf
+
+//import com.google.code.
 
 
 
@@ -14,7 +18,7 @@ class cAdpTempos( val items: MutableList<horario>,
                   val _context: Context?
 ) : RecyclerView.Adapter<cAdpTempos.ViewHolder>() {
 
-    val mHorarios: MutableList<horario>? = items;
+    var mHorarios: MutableList<horario>? = items;
 
     class ViewHolder (view: View) : RecyclerView.ViewHolder(view) {
         // Holds the TextView that will add each animal to
@@ -56,19 +60,42 @@ class cAdpTempos( val items: MutableList<horario>,
         //this.items.clear();
         mHorarios?.clear();
         notifyDataSetChanged()
+        salvar()
     }
 
 
     public fun insertItem(item: horario) {
         mHorarios?.add(item);
         notifyItemInserted(itemCount)
+        salvar()
     }
 
     public fun updateList(item: horario?) {
         if (item != null) {
             insertItem(item)
+            salvar()
         }
+
     }
+
+    public fun salvar(){
+        val gs = com.google.gson.Gson();
+        var strHorarios : String = gs.toJson(mHorarios)
+        global.salvarpref("check_point",strHorarios)
+    }
+
+    public fun carregar(){
+        val gs = com.google.gson.Gson();
+        var strHorarios : String = global.lerpref("check_point")
+        if (!strHorarios.isNullOrEmpty()) {
+            var mhoarios: MutableList<horario> = gs.fromJson<MutableList<horario>>(strHorarios, object : TypeToken<MutableList<horario>>() {}.type)
+            mHorarios = mhoarios;
+        }
+        //var mhoario : List<horario> = gs.fromJson<List<horario>>(strHorarios);
+    }
+
 }
 
 public class horario(val checkpoint:String , val Titulo:String, val Horario:String )
+
+public abstract class TLstHorarios : MutableList<horario>
